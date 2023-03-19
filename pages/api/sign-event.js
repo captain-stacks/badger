@@ -1,14 +1,14 @@
 import { getPublicKey, getEventHash, signEvent } from 'nostr-tools'
 
 export default async function handler(req, res) {
-  const { recipient, badgeId, badgeName } = req.body
+  const { recipient, sender, badgeName } = req.body
   const key = process.env.API_KEY
   const event = {
     kind: 8,
     pubkey: getPublicKey(key),
     created_at: Math.floor(Date.now() / 1000),
     tags: [
-      ["a", `30009:${badgeId}:${badgeName}`],
+      ["a", `30009:${sender}:${badgeName}`],
       ["p", recipient]],
     content: ''
   }

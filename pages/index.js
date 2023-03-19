@@ -2,13 +2,18 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
 import { useRef } from 'react'
-import { nip19 } from 'nostr-tools'
+import { nip19, relayInit } from 'nostr-tools'
+
+const relays = [
+  'wss://nostr.mutinywallet.com'
+]
 
 export default function Home() {
   const input = useRef()
   
   function submit() {
     const { type, data } = nip19.decode(input.current.value)
+
     fetch('api/sign-event', {
       method: 'POST',
       headers: {
@@ -16,13 +21,31 @@ export default function Home() {
       },
       body: JSON.stringify({
         recipient: data,
-        badgeId: 'c060b31fe2bbb0be4d393bc7c40a80848a25b8f0e0f382cb5b49c37bf7476cb4',
-        badgeName: 'bitcoin-believer'
+        sender: 'c060b31fe2bbb0be4d393bc7c40a80848a25b8f0e0f382cb5b49c37bf7476cb4',
+        badgeName: 'unconfirmed-autist'
       })
     })
     .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data);
+    .then(async event => {
+      console.log('Success:', event);
+      const relay = relayInit(relays[0])
+
+      relay.on('connect', () => {
+        console.log(`connected to ${relay.url}`)
+      })
+      relay.on('error', () => {
+        console.log(`failed to connect to ${relay.url}`)
+      })
+      
+      await relay.connect()
+
+      const pub = relay.publish(event)
+      pub.on('ok', () => {
+        console.log(`${relay.url} has accepted our event`)
+      })
+      pub.on('failed', reason => {
+        console.log(`failed to publish to ${relay.url}: ${reason}`)
+      })
     })
   }
 
@@ -33,8 +56,8 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <img src={'/autism.png'}/>
-        <div className={styles.description} style={{transform: 'scale(1.5)', transformOrigin: 'top left'}}>
+        <img src={'/autism.png'} width="360" style={{marginBottom: '20px'}}/>
+        <div className={styles.description} style={{transform: 'scale(1.3)', transformOrigin: 'top'}}>
           <p style={{background: '#233'}}>
             Enter your npub to claim this badge:
             <br/>
