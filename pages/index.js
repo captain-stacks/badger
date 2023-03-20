@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { nip19, relayInit } from 'nostr-tools'
 
 const relays = [
@@ -10,9 +10,11 @@ const relays = [
 
 export default function Home() {
   const input = useRef()
+  const [loading, setLoading] = useState()
   
   function submit() {
     const { type, data } = nip19.decode(input.current.value)
+    setLoading(true)
 
     fetch('api/sign-event', {
       method: 'POST',
@@ -42,6 +44,7 @@ export default function Home() {
       const pub = relay.publish(event)
       pub.on('ok', () => {
         console.log(`${relay.url} has accepted our event`)
+        window.location = 'https://badges.page'
       })
       pub.on('failed', reason => {
         console.log(`failed to publish to ${relay.url}: ${reason}`)
@@ -63,7 +66,9 @@ export default function Home() {
             <br/>
             <input ref={input} style={{padding: '4px', marginTop: '10px', width: '475px'}}/>
             <br/><br/>
-            <input onClick={submit} type='submit' style={{padding: '2px 5px'}}/>
+            {loading ? 'Loading...' : <>
+              <input onClick={submit} type='submit' style={{padding: '2px 5px'}}/>
+            </>}
           </p>
         </div>
       </main>
