@@ -1,20 +1,23 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
-import { useRef, useState } from 'react'
-import { nip19, relayInit } from 'nostr-tools'
+import { useState } from 'react'
+import { relayInit } from 'nostr-tools'
 
 const relays = [
   'wss://nostr.mutinywallet.com'
 ]
 
 export default function Home() {
-  const input = useRef()
   const [loading, setLoading] = useState()
   
-  function submit() {
-    const { type, data } = nip19.decode(input.current.value)
+  async function submit() {
+    if (!window.nostr) {
+      alert('Must use NIP-07 extension')
+      return
+    }
     setLoading(true)
+    const recipient = await window.nostr.getPublicKey()
 
     fetch('api/sign-event', {
       method: 'POST',
@@ -22,9 +25,9 @@ export default function Home() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        recipient: data,
+        recipient: recipient,
         sender: 'c060b31fe2bbb0be4d393bc7c40a80848a25b8f0e0f382cb5b49c37bf7476cb4',
-        badgeName: 'unconfirmed-autist'
+        badgeName: 'bitcoin-believer'
       })
     })
     .then(response => response.json())
@@ -55,21 +58,20 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Badge Mint</title>
+        <title>Badger</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <img src={'/autism.png'} width="360" style={{marginBottom: '20px'}}/>
-        <div className={styles.description} style={{transform: 'scale(1.3)', transformOrigin: 'top'}}>
-          <p style={{background: '#233'}}>
-            Enter your npub to claim this badge:
-            <br/>
-            <input ref={input} style={{padding: '4px', marginTop: '10px', width: '475px'}}/>
-            <br/><br/>
-            {loading ? 'Loading...' : <>
-              <input onClick={submit} type='submit' style={{padding: '2px 5px'}}/>
-            </>}
-          </p>
+        <h1 style={{transform: 'scale(1.3)'}}>The Badger App</h1>
+        <img src={'/badge.png'} width="360" style={{marginTop: '20px', marginBottom: '40px'}}/>
+        <div style={{transform: 'scale(1.75)'}}>
+          {loading ? 'Loading...' : <>
+            <input
+              type='submit'
+              value='Claim this badge'
+              onClick={submit}
+              style={{padding: '2px 5px'}}/>
+          </>}
         </div>
       </main>
     </>
